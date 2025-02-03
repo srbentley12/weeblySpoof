@@ -17,29 +17,22 @@ const priceDictionary = {
 
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const myParam = urlParams.get("selection");
+const urlParams = new URLSearchParams(window.location.search);
+const selectionParam = urlParams.get("selection");
 
-    console.log("Query parameter value:", myParam);
+document.addEventListener("DOMContentLoaded", function() {
+
+    console.log("Query parameter value:", selectionParam);
 
     // Element selectors
     // price locations
     const itemAmountDiv = document.querySelectorAll('.order-summary-item--amount'); // this is 2 divs with subtotals - will change with radio selection
-    const termDescriptions = document.querySelectorAll('.term-description'); // this is 3 divs with term descriptions - will change with radio selection
-
 
     // plan name locations - set on page load
     const mainTitle = document.querySelector('.service-terms--header h2');
     const itemizedTitle = document.querySelector('.order-summary-item--name');
 
-    // radio will change these
-    const itemDescription = document.querySelector('.order-summary-item--description');
-
-
-
-
-    switch (myParam) {
+    switch (selectionParam) {
         case 'free':
             if (itemAmountDiv[0]) itemAmountDiv[0].innerText = '$0';
             if (itemAmountDiv[1]) itemAmountDiv[1].innerText = '$0';
@@ -73,6 +66,16 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     setTermDescriptions();
+
+    // add event listener for radio buttons
+    document.querySelectorAll('input[name="term-selection"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const termLength = radio.dataset.termLength;
+          updateOrderSummary(termLength, selectionParam);
+        });
+      });
+
+      updateOrderSummary(1, selectionParam);
 });
 
 function showTermSelections() {
@@ -86,25 +89,70 @@ function showTermSelections() {
 // on radio click and on load
 function setTermDescriptions(){
     const urlParams = new URLSearchParams(window.location.search);
-    const myParam = urlParams.get("selection");
+    const selectionParam = urlParams.get("selection");
 
-    console.log("Query parameter value:", myParam);
-    if (myParam !== 'personal' && myParam !== 'professional' && myParam !== 'performance') return;
+    console.log("Query parameter value:", selectionParam);
+    if (selectionParam !== 'personal' && selectionParam !== 'professional' && selectionParam !== 'performance') return;
 
     const termDescriptions = document.querySelectorAll('.term-description');
 
     console.log('termDescriptions', termDescriptions);
-    termDescriptions[0].innerText = '$' + priceDictionary[myParam].opt1.price + '.00 x 1 month';
-    termDescriptions[1].innerText = '$' + priceDictionary[myParam].opt2.price + '.00 x 12 months';
-    termDescriptions[2].innerText = '$' + priceDictionary[myParam].opt3.price + '.00 x 24 months';
+    termDescriptions[0].innerText = '$' + priceDictionary[selectionParam].opt1.price + '.00 x 1 month';
+    termDescriptions[1].innerText = '$' + priceDictionary[selectionParam].opt2.price + '.00 x 12 months';
+    termDescriptions[2].innerText = '$' + priceDictionary[selectionParam].opt3.price + '.00 x 24 months';
 
     // set the savings divs
     const termItems = document.querySelectorAll('.service-terms--item');
     termItems.forEach((item, index) => {
-        const savingsValue = priceDictionary[myParam]['opt' + (index + 1)].savings;
+        const savingsValue = priceDictionary[selectionParam]['opt' + (index + 1)].savings;
         const savingsContainer = item.querySelector('.term-savings');
         if (savingsContainer && savingsContainer.firstElementChild) {
             savingsContainer.firstElementChild.innerText = savingsValue ? 'SAVE $' + savingsValue : '';
         }
     });
+}
+
+function updateOrderSummary(termLength, selection) {
+    // Update your order summary amounts based on termLength
+    console.log('Updating order summary for term length:', termLength);
+    const itemAmountDivs = document.querySelectorAll('.order-summary-item--amount');
+    const itemDescription = document.querySelector('.order-summary-item--description');
+
+    var perString = '';
+    var itemSummary = 'For your site Ignorant Money Club <br> ';
+    if(termLength === '1') {
+        perString = ' /mo';
+        itemSummary += '1 month';
+    } else if(termLength === '12') {
+        perString = ' /yr';
+        itemSummary += '1 year';
+    } else if(termLength === '24') {
+        perString = '<br>for 2 years';
+        itemSummary += '2 years';
+    }
+    const price = '$' + priceDictionary[selection].opt1.price * termLength + '.00';
+    itemAmountDivs[0].innerHTML = price + perString;
+    itemAmountDivs[1].innerText = price;
+
+    itemDescription.innerHTML = itemSummary;
+  }
+
+  let currentTermLength = '1';  // default term length
+
+// Update term length when radio button changes
+document.querySelectorAll('input[name="term-selection"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    currentTermLength = radio.dataset.termLength;
+    updateOrderSummary(currentTermLength, currentSelection);
+  });
+});
+
+// Override the checkout button click to include URL parameters
+const checkoutButton = document.querySelector('[data-dd-action-name="Continue to checkout"]');
+if (checkoutButton) {
+  checkoutButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    const checkoutUrl = `checkout.html?selection=${encodeURIComponent(selectionParam)}&termLength=${encodeURIComponent(currentTermLength)}`;
+    location.replace(checkoutUrl);
+  });
 }
