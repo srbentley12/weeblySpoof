@@ -120,17 +120,21 @@ function updateOrderSummary(termLength, selection) {
 
     var perString = '';
     var itemSummary = 'For your site Ignorant Money Club <br> ';
+    var basePrice = 0;
     if(termLength === '1') {
         perString = ' /mo';
         itemSummary += '1 month';
+        basePrice = priceDictionary[selection].opt1.price;
     } else if(termLength === '12') {
         perString = ' /yr';
         itemSummary += '1 year';
+        basePrice = priceDictionary[selection].opt2.price;
     } else if(termLength === '24') {
         perString = '<br>for 2 years';
         itemSummary += '2 years';
+        basePrice = priceDictionary[selection].opt3.price;
     }
-    const price = '$' + priceDictionary[selection].opt1.price * termLength + '.00';
+    const price = '$' + basePrice * termLength + '.00';
     itemAmountDivs[0].innerHTML = price + perString;
     itemAmountDivs[1].innerText = price;
 
